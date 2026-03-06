@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_PROMPT = `You are a friendly and encouraging English teacher having a casual conversation with a Korean learner.
 
@@ -23,28 +23,26 @@ export async function POST(req: NextRequest) {
     try {
         const { message, history } = await req.json();
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-        // 대화 이력을 텍스트로 변환
         const historyText = history
             .map((m: { role: string; content: string }) =>
                 `${m.role === 'user' ? 'Student' : 'Teacher'}: ${m.content}`
             )
             .join('\n');
 
-        const prompt = `${SYSTEM_PROMPT}
+        const completion = await groq.chat.completions.create({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                {
+                    role: 'user',
+                    content: `Previous conversation:\n${historyText}\n\nStudent's new message: "${message}"\n\nRespond in JSON:`,
+                },
+            ],
+            temperature: 0.7,
+            max_tokens: 512,
+        });
 
-Previous conversation:
-${historyText}
-
-Student's new message: "${message}"
-
-Respond in JSON:`;
-
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().trim();
-
-        // JSON 파싱 (코드블록 제거)
+        const text = completion.choices[0]?.message?.content?.trim() ?? '';
         const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
         const parsed = JSON.parse(cleaned);
 
