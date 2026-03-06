@@ -2,7 +2,7 @@
 
 > AI 선생님과 함께하는 영어 회화 학습 웹앱
 
-**🎬 [데모 영상 보기 (Google Drive)](https://drive.google.com/your-link-here)**
+**🎬 [데모 영상 보기 (Google Drive)](https://drive.google.com/file/d/1PUxLugqlO-SQD4AShzl3b5mCk8PFZsWO/view?usp=sharing)**
 
 ## ✨ 주요 기능
 
