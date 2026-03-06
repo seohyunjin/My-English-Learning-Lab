@@ -15,18 +15,32 @@ export default function VocabularyPage() {
     const [vocab, setVocab] = useState<VocabItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchVocab = async () => {
-            const { data, error } = await supabase
-                .from('vocabulary')
-                .select('*')
-                .order('created_at', { ascending: false });
-            if (!error && data) setVocab(data);
-            setLoading(false);
-        };
         fetchVocab();
     }, []);
+
+    const fetchVocab = async () => {
+        const { data, error } = await supabase
+            .from('vocabulary')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (!error && data) setVocab(data);
+        setLoading(false);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('이 단어를 삭제할까요?')) return;
+        setDeletingId(id);
+        const { error } = await supabase.from('vocabulary').delete().eq('id', id);
+        if (!error) {
+            setVocab((prev) => prev.filter((v) => v.id !== id));
+        } else {
+            alert('삭제 중 오류가 발생했습니다.');
+        }
+        setDeletingId(null);
+    };
 
     const filtered = vocab.filter(
         (v) =>
@@ -71,8 +85,39 @@ export default function VocabularyPage() {
             ) : (
                 <div className="vocab-grid">
                     {filtered.map((item) => (
-                        <div key={item.id} className="vocab-card">
-                            <div className="vocab-word">{item.word}</div>
+                        <div key={item.id} className="vocab-card" style={{ position: 'relative' }}>
+                            {/* 삭제 버튼 */}
+                            <button
+                                onClick={() => handleDelete(item.id)}
+                                disabled={deletingId === item.id}
+                                style={{
+                                    position: 'absolute',
+                                    top: '0.6rem',
+                                    right: '0.6rem',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: 'var(--text3)',
+                                    fontSize: '1rem',
+                                    lineHeight: 1,
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    transition: 'color 0.2s, background 0.2s',
+                                }}
+                                onMouseEnter={(e) => {
+                                    (e.target as HTMLButtonElement).style.color = 'var(--red)';
+                                    (e.target as HTMLButtonElement).style.background = 'rgba(248,113,113,0.1)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    (e.target as HTMLButtonElement).style.color = 'var(--text3)';
+                                    (e.target as HTMLButtonElement).style.background = 'transparent';
+                                }}
+                                title="삭제"
+                            >
+                                {deletingId === item.id ? '...' : '✕'}
+                            </button>
+
+                            <div className="vocab-word" style={{ paddingRight: '1.5rem' }}>{item.word}</div>
                             <div className="vocab-meaning">{item.meaning}</div>
                             <div className="vocab-example">"{item.example}"</div>
                         </div>
