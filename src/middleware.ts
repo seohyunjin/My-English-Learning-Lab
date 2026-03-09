@@ -10,7 +10,7 @@ export function middleware(req: NextRequest) {
 
     // 인증 쿠키 확인
     const auth = req.cookies.get('ell_auth')?.value;
-    if (auth === process.env.APP_PASSWORD) {
+    if (auth === process.env.APP_PASSWORD?.trim()) {
         return NextResponse.next();
     }
 
